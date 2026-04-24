@@ -16,7 +16,15 @@ Raw earthquake data often contains redundant picks for the exact same wave (e.g.
 *   **`02_organize_quakexml_file.py`**: This script reads the events, groups the wave arrivals by station and wave phase (P or S), and strictly filters them to select the single *best* pick for that station. It prioritizes `modelled` picks, falls back to `autopick`, and otherwise takes the first available pick. It exports this cleaned dataset to `filtered_picks_organized.csv`.
 *   **`02_organize_quakexml_file_explained.ipynb`**: A companion Jupyter Notebook that breaks down the logic and priority-filtering of this script into easy-to-understand steps.
 
-## 3. QuakeML to SeisBench CSV Converter
+## 3. Inspecting Raw Waveform Files (.m)
+
+In addition to the catalog metadata, we also process the actual physical waveform recordings (saved as `.m` files).
+
+*   **`ref_read_m_file.py`**: A reference script demonstrating how to find `.m` files by their origin timestamp, read them using `obspy`, apply filters, calculate Signal-to-Noise Ratios (SNR), and plot spectrograms.
+*   **`03_check_raw_m_file.py`**: A utility script that searches a directory for `.m` files and prints out a detailed summary of the trace metadata within them (Station, Network, Channel, Sampling Rate, Total Length).
+*   **`03_check_raw_m_file_explained.ipynb`**: A companion Jupyter Notebook that explains the process of reading and extracting metadata from these raw waveform files step-by-step.
+
+## 4. QuakeML to SeisBench CSV Converter
 
 *   **`quakeml_to_seisbench.py`**: Reads a QuakeML event catalog and generates a `metadata.csv` file that is fully compatible with SeisBench. It extracts event origins and phase arrivals, formatting them exactly as required for model training or evaluation.
 
