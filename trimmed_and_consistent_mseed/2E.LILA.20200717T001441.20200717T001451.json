@@ -1,0 +1,22 @@
+{
+    "event_id": "ffec101b-330b-4c29-82dc-379a4d667dee",
+    "station": "LILA",
+    "network": "2E",
+    "start_time": "2020-07-17T00:14:41.542437Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.LILA.HH1.20200717T001441.20200717T001451.mseed",
+            "2E.LILA.HH2.20200717T001441.20200717T001451.mseed",
+            "2E.LILA.HHZ.20200717T001441.20200717T001451.mseed"
+        ]
+    }
+}

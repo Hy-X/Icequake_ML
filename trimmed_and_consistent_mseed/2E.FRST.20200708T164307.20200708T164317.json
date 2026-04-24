@@ -1,0 +1,22 @@
+{
+    "event_id": "bff2a0bd-1542-41b8-8b81-5d030a2f1e15",
+    "station": "FRST",
+    "network": "2E",
+    "start_time": "2020-07-08T16:43:07.901576Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.FRST.HH1.20200708T164307.20200708T164317.mseed",
+            "2E.FRST.HH2.20200708T164307.20200708T164317.mseed",
+            "2E.FRST.HHZ.20200708T164307.20200708T164317.mseed"
+        ]
+    }
+}

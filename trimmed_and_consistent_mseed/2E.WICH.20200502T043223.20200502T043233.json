@@ -1,0 +1,22 @@
+{
+    "event_id": "ebc68982-9402-4bef-99e6-3232a0dea80c",
+    "station": "WICH",
+    "network": "2E",
+    "start_time": "2020-05-02T04:32:23.312127Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "s_arrival_sample": 1000,
+    "s_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.WICH.HH1.20200502T043223.20200502T043233.mseed",
+            "2E.WICH.HH2.20200502T043223.20200502T043233.mseed",
+            "2E.WICH.HHZ.20200502T043223.20200502T043233.mseed"
+        ]
+    }
+}

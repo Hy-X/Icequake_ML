@@ -1,0 +1,9 @@
+Created directory: trimmed_and_consistent_mseed
+Parsing CSV to find earliest local arrival times for each event/station...
+Identified 370 unique station-event arrival times.
+Indexing input files in 'selected_quick_migrate_mseed'...
+Slicing traces into exactly 10-second windows...
+
+--- SUMMARY ---
+Successfully sliced and saved 1110 consistent 10s traces.
+Could not find covering .mseed file for 0 station-events.

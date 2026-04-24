@@ -1,0 +1,39 @@
+{
+  "peak_detection": {
+    "sampling_rate": 200,
+    "height": 0.5,
+    "distance": 100
+  },
+  "data": {
+    "dataset_name": "Local",
+    "sampling_rate": 200,
+    "window_len": 1001,
+    "samples_before": 1000,
+    "windowlen_large": 2000,
+    "sample_fraction": 1.0
+  },
+
+  "training": {
+    "batch_size": 4,
+    "num_workers": 2,
+    "learning_rate": 0.01,
+    "epochs": 50,
+    "patience": 5,
+    "loss_weights": [
+      0.01,
+      0.4,
+      0.59
+    ],
+    "optimization": {
+      "mixed_precision": true,
+      "gradient_accumulation_steps": 1,
+      "pin_memory": true,
+      "prefetch_factor": 2,
+      "persistent_workers": true
+    }
+  },
+  "device": {
+    "use_cuda": true,
+    "device_id": 0
+  }
+}

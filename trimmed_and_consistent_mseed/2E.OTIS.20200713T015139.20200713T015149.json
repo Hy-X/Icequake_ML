@@ -1,0 +1,22 @@
+{
+    "event_id": "f2338b3d-428f-4e45-9dd2-4281cfce1430",
+    "station": "OTIS",
+    "network": "2E",
+    "start_time": "2020-07-13T01:51:39.699701Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.OTIS.HH1.20200713T015139.20200713T015149.mseed",
+            "2E.OTIS.HH2.20200713T015139.20200713T015149.mseed",
+            "2E.OTIS.HHZ.20200713T015139.20200713T015149.mseed"
+        ]
+    }
+}

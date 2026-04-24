@@ -1,0 +1,25 @@
+======================================================================
+Packing to SeisBench Format
+======================================================================
+Found 370 metadata JSON files.
+Traces converted: 0it [00:00, ?it/s]Traces converted: 154it [00:00, 1530.99it/s]Traces converted: 308it [00:00, 1535.50it/s]Traces converted: 370it [00:00, 1427.58it/s]
+2026-04-24 21:27:25,483 | seisbench | WARNING | Component order not specified, defaulting to 'ZNE'.
+Processed 50/370
+Processed 100/370
+Processed 150/370
+Processed 200/370
+Processed 250/370
+Processed 300/370
+Processed 350/370
+
+✓ Completed packing 370 traces (0 failed).
+
+Verifying dataset integrity...
+✓ Dataset loaded successfully with SeisBench
+✓ Number of traces: 370
+✓ Metadata loaded: 370 rows
+
+Dataset splits:
+  train: 259 traces
+  dev: 55 traces
+  test: 56 traces

@@ -1,0 +1,63 @@
+Indexing MiniSEED files in unpack_top_300_miniseed_raw/ ...
+Indexed 6300 files across 14 unique stations.
+
+Scanning filtered_picks_organized.csv for wave arrival matches...
+
+--- SUMMARY ---
+Total CSV rows checked: 399
+Total rows where no covering .mseed was found: 0
+Total unique .mseed files successfully copied: 1110
+--- VERIFICATION ---
+Output Directory Exists: ✅
+File Count Matches Expected (1110): ✅
+Copied Files are Valid MiniSEED: ✅
+
+--- VISUAL VERIFICATION (3 EXAMPLES) ---
+
+Example 1:
+  CSV Info Used:
+    - Station:   DRSC
+    - Pick Time: 2020-03-09T02:49:18.086651Z
+  Available MiniSEED files for DRSC (Showing first 3 of 462):
+    - 2E.DRSC.HH1.20200713T211647.20200713T211728.mseed
+        [Start: 2020-07-13T21:16:47.000000Z | End: 2020-07-13T21:17:28.000000Z]
+    - 2E.DRSC.HH1.20200708T011417.20200708T011458.mseed
+        [Start: 2020-07-08T01:14:17.000000Z | End: 2020-07-08T01:14:58.000000Z]
+    - 2E.DRSC.HHZ.20200715T012902.20200715T012944.mseed
+        [Start: 2020-07-15T01:29:02.000000Z | End: 2020-07-15T01:29:44.000000Z]
+  Selected & Copied Files (Where Start <= Pick <= End):
+    ✅ 2E.DRSC.HH1.20200309T024911.20200309T024953.mseed
+    ✅ 2E.DRSC.HHZ.20200309T024911.20200309T024952.mseed
+    ✅ 2E.DRSC.HH2.20200309T024911.20200309T024953.mseed
+
+Example 2:
+  CSV Info Used:
+    - Station:   DRSC
+    - Pick Time: 2020-03-09T02:49:18.681811Z
+  Available MiniSEED files for DRSC (Showing first 3 of 462):
+    - 2E.DRSC.HH1.20200713T211647.20200713T211728.mseed
+        [Start: 2020-07-13T21:16:47.000000Z | End: 2020-07-13T21:17:28.000000Z]
+    - 2E.DRSC.HH1.20200708T011417.20200708T011458.mseed
+        [Start: 2020-07-08T01:14:17.000000Z | End: 2020-07-08T01:14:58.000000Z]
+    - 2E.DRSC.HHZ.20200715T012902.20200715T012944.mseed
+        [Start: 2020-07-15T01:29:02.000000Z | End: 2020-07-15T01:29:44.000000Z]
+  Selected & Copied Files (Where Start <= Pick <= End):
+    ✅ 2E.DRSC.HH1.20200309T024911.20200309T024953.mseed
+    ✅ 2E.DRSC.HHZ.20200309T024911.20200309T024952.mseed
+    ✅ 2E.DRSC.HH2.20200309T024911.20200309T024953.mseed
+
+Example 3:
+  CSV Info Used:
+    - Station:   DRSC
+    - Pick Time: 2020-03-09T04:06:40.731790Z
+  Available MiniSEED files for DRSC (Showing first 3 of 462):
+    - 2E.DRSC.HH1.20200713T211647.20200713T211728.mseed
+        [Start: 2020-07-13T21:16:47.000000Z | End: 2020-07-13T21:17:28.000000Z]
+    - 2E.DRSC.HH1.20200708T011417.20200708T011458.mseed
+        [Start: 2020-07-08T01:14:17.000000Z | End: 2020-07-08T01:14:58.000000Z]
+    - 2E.DRSC.HHZ.20200715T012902.20200715T012944.mseed
+        [Start: 2020-07-15T01:29:02.000000Z | End: 2020-07-15T01:29:44.000000Z]
+  Selected & Copied Files (Where Start <= Pick <= End):
+    ✅ 2E.DRSC.HH1.20200309T040633.20200309T040715.mseed
+    ✅ 2E.DRSC.HHZ.20200309T040633.20200309T040715.mseed
+    ✅ 2E.DRSC.HH2.20200309T040633.20200309T040715.mseed

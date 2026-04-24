@@ -1,0 +1,22 @@
+{
+    "event_id": "6ce2777b-489c-47c4-a1fe-a4681d6b2998",
+    "station": "TJTJ",
+    "network": "2E",
+    "start_time": "2020-07-29T23:36:12.367063Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "s_arrival_sample": 1000,
+    "s_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.TJTJ.HH1.20200729T233612.20200729T233622.mseed",
+            "2E.TJTJ.HH2.20200729T233612.20200729T233622.mseed",
+            "2E.TJTJ.HHZ.20200729T233612.20200729T233622.mseed"
+        ]
+    }
+}

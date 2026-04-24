@@ -1,0 +1,27 @@
+--- ORIGINAL ---
+sampling_rate: 200.0
+delta: 0.005
+starttime: 2020-07-13T06:30:34.700000Z
+endtime: 2020-07-13T06:31:16.500000Z
+npts: 8361
+calib: 1.0
+network: 2E
+station: EPJZ
+location: 
+channel: HHZ
+mseed: AttribDict({'dataquality': 'D', 'number_of_records': 2, 'encoding': 'STEIM2', 'byteorder': '>', 'record_length': 4096, 'filesize': 172032})
+_format: MSEED
+
+--- UNPACKED ---
+sampling_rate: 200.0
+delta: 0.005
+starttime: 2020-07-13T04:18:42.870000Z
+endtime: 2020-07-13T04:19:24.670000Z
+npts: 8361
+calib: 1.0
+network: 2E
+station: EPJZ
+location: 
+channel: HH1
+mseed: AttribDict({'dataquality': 'D', 'number_of_records': 2, 'encoding': 'STEIM2', 'byteorder': '>', 'record_length': 4096, 'filesize': 8192})
+_format: MSEED

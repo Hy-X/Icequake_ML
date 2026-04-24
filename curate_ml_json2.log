@@ -1,0 +1,9 @@
+Parsing CSV to find local arrival times for each event/station...
+Identified 370 unique station-event pairs.
+Indexing input files in 'selected_quick_migrate_mseed'...
+Slicing traces into exactly 10-second windows and writing JSON...
+
+--- SUMMARY ---
+Successfully sliced and saved 1110 consistent 10s traces.
+Successfully generated JSON metadata files alongside the traces.
+Could not find covering .mseed file for 0 station-events.

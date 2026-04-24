@@ -1,0 +1,22 @@
+{
+    "event_id": "f9165f33-b6de-4ad6-a0be-b606a5d8d78f",
+    "station": "WICH",
+    "network": "2E",
+    "start_time": "2020-07-08T17:19:42.327296Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.WICH.HH1.20200708T171942.20200708T171952.mseed",
+            "2E.WICH.HH2.20200708T171942.20200708T171952.mseed",
+            "2E.WICH.HHZ.20200708T171942.20200708T171952.mseed"
+        ]
+    }
+}

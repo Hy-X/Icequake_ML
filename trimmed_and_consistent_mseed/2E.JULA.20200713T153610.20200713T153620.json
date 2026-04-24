@@ -1,0 +1,22 @@
+{
+    "event_id": "cb0ef1e5-bc98-41d1-9737-7ccf6c9ba28d",
+    "station": "JULA",
+    "network": "2E",
+    "start_time": "2020-07-13T15:36:10.825428Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "s_arrival_sample": 1000,
+    "s_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.JULA.HH1.20200713T153610.20200713T153620.mseed",
+            "2E.JULA.HH2.20200713T153610.20200713T153620.mseed",
+            "2E.JULA.HHZ.20200713T153610.20200713T153620.mseed"
+        ]
+    }
+}

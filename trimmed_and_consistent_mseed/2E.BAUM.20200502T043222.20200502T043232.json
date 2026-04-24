@@ -1,0 +1,24 @@
+{
+    "event_id": "ebc68982-9402-4bef-99e6-3232a0dea80c",
+    "station": "BAUM",
+    "network": "2E",
+    "start_time": "2020-05-02T04:32:22.574681Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "s_arrival_sample": 1180,
+    "s_arrival_time": 5.901956,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.BAUM.HH1.20200502T043222.20200502T043232.mseed",
+            "2E.BAUM.HH2.20200502T043222.20200502T043232.mseed",
+            "2E.BAUM.HHZ.20200502T043222.20200502T043232.mseed"
+        ]
+    }
+}

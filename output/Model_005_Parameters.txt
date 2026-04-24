@@ -1,0 +1,3 @@
+Data Sampling Rate: 200
+Detection Height Parameter: 0.5
+Detection Distance Parameter: 100

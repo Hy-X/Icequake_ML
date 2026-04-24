@@ -1,0 +1,13 @@
+Indexing MiniSEED files in unpack_top_300_miniseed_raw/ ...
+Indexed 6300 files across 14 unique stations.
+
+Scanning filtered_picks_organized.csv for wave arrival matches...
+
+--- SUMMARY ---
+Total CSV rows checked: 399
+Total rows where no covering .mseed was found: 0
+Total unique .mseed files successfully copied: 1110
+--- VERIFICATION ---
+Output Directory Exists: ✅
+File Count Matches Expected (1110): ✅
+Copied Files are Valid MiniSEED: ✅

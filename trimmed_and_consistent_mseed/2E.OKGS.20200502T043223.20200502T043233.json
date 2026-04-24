@@ -1,0 +1,24 @@
+{
+    "event_id": "ebc68982-9402-4bef-99e6-3232a0dea80c",
+    "station": "OKGS",
+    "network": "2E",
+    "start_time": "2020-05-02T04:32:23.261729Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "s_arrival_sample": 1310,
+    "s_arrival_time": 6.554477,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.OKGS.HH1.20200502T043223.20200502T043233.mseed",
+            "2E.OKGS.HH2.20200502T043223.20200502T043233.mseed",
+            "2E.OKGS.HHZ.20200502T043223.20200502T043233.mseed"
+        ]
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "event_id": "2b2ab3b5-d7f6-4792-bc37-81a3a54c98b7",
+    "station": "DEEJ",
+    "network": "2E",
+    "start_time": "2020-08-14T00:14:21.269236Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "s_arrival_sample": 1000,
+    "s_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.DEEJ.HH1.20200814T001421.20200814T001431.mseed",
+            "2E.DEEJ.HH2.20200814T001421.20200814T001431.mseed",
+            "2E.DEEJ.HHZ.20200814T001421.20200814T001431.mseed"
+        ]
+    }
+}

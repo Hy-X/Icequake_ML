@@ -1,0 +1,22 @@
+{
+    "event_id": "46edd12a-7154-4527-a84a-280fbfbd1c65",
+    "station": "SQIG",
+    "network": "2E",
+    "start_time": "2020-07-25T02:58:00.749115Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "s_arrival_sample": 1000,
+    "s_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.SQIG.HH1.20200725T025800.20200725T025810.mseed",
+            "2E.SQIG.HH2.20200725T025800.20200725T025810.mseed",
+            "2E.SQIG.HHZ.20200725T025800.20200725T025810.mseed"
+        ]
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "event_id": "0fbfa751-412c-41a3-b990-2fa72758d4f7",
+    "station": "OKGS",
+    "network": "2E",
+    "start_time": "2020-07-23T08:27:28.105895Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.OKGS.HH1.20200723T082728.20200723T082738.mseed",
+            "2E.OKGS.HH2.20200723T082728.20200723T082738.mseed",
+            "2E.OKGS.HHZ.20200723T082728.20200723T082738.mseed"
+        ]
+    }
+}

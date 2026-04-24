@@ -1,0 +1,24 @@
+{
+    "event_id": "a1d883ce-6a51-4320-b453-73ca0ed11633",
+    "station": "DRSC",
+    "network": "2E",
+    "start_time": "2020-03-09T15:06:02.813164Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "s_arrival_sample": 1123,
+    "s_arrival_time": 5.615592,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.DRSC.HH1.20200309T150602.20200309T150612.mseed",
+            "2E.DRSC.HH2.20200309T150602.20200309T150612.mseed",
+            "2E.DRSC.HHZ.20200309T150602.20200309T150612.mseed"
+        ]
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "event_id": "9f5c524d-7438-4351-aebb-7207c78c0c1f",
+    "station": "FRST",
+    "network": "2E",
+    "start_time": "2020-04-19T23:39:32.875719Z",
+    "sample_rate": 200.0,
+    "duration": 10.0,
+    "p_arrival_sample": 1000,
+    "p_arrival_time": 5.0,
+    "channels": [
+        "HH1",
+        "HH2",
+        "HHZ"
+    ],
+    "files": {
+        "mseed": [
+            "2E.FRST.HH1.20200419T233932.20200419T233942.mseed",
+            "2E.FRST.HH2.20200419T233932.20200419T233942.mseed",
+            "2E.FRST.HHZ.20200419T233932.20200419T233942.mseed"
+        ]
+    }
+}
