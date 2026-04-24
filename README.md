@@ -1,35 +1,99 @@
 # Icequake_ML
 
-This repository is intended for Icequake ML with quick migrate results. It includes tools to explore, clean, and convert QuakeML outputs into formats compatible with machine learning workflows (like SeisBench).
+This repository contains a full end-to-end pipeline for training seismic phase detection ML models on icequake data. Starting from raw QuakeML catalog files and `.m` waveform archives, the pipeline curates a SeisBench-compatible dataset and trains a PhaseNet model to identify P and S wave arrivals.
 
-## 1. Examining the Raw Data
+## Pipeline Overview
 
-Before cleaning your data, it's helpful to see what is inside the raw QuakeML file.
+```
+Raw Data (.m / QuakeML) → Picks Filtering → MiniSEED Export → Quality Control
+       → Curation (ZNE windows) → SeisBench HDF5 → Training (PhaseNet)
+```
 
-*   **`01_exam_quakexml_file.py`**: A simple script that reads the QuakeML catalog (e.g., `filtered_events.xml`) and prints out the basic event details (origin time, location, magnitude) and raw, unfiltered wave arrivals (picks) to the console.
-*   **`01_exam_quakexml_file_explained.ipynb`**: A beginner-friendly Jupyter Notebook that walks through the `01_exam_quakexml_file.py` script step-by-step. Perfect for college students or anyone new to `obspy`.
+---
+
+## 1. Examining the Raw Catalog
+
+*   **`01_exam_quakexml_file.py`**: Reads the QuakeML catalog (e.g., `filtered_events.xml`) and prints event details (origin time, location, magnitude) and raw phase picks to the console.
+*   **`01_exam_quakexml_file_explained.ipynb`**: Beginner-friendly companion notebook walking through the script step-by-step.
 
 ## 2. Organizing and Filtering Picks
 
-Raw earthquake data often contains redundant picks for the exact same wave (e.g., an automatic computer guess vs a human-reviewed model).
+Raw data often contains redundant picks for the same wave (e.g., automatic vs. human-reviewed).
 
-*   **`02_organize_quakexml_file.py`**: This script reads the events, groups the wave arrivals by station and wave phase (P or S), and strictly filters them to select the single *best* pick for that station. It prioritizes `modelled` picks, falls back to `autopick`, and otherwise takes the first available pick. It exports this cleaned dataset to `filtered_picks_organized.csv`.
-*   **`02_organize_quakexml_file_explained.ipynb`**: A companion Jupyter Notebook that breaks down the logic and priority-filtering of this script into easy-to-understand steps.
+*   **`02_organize_quakexml_file.py`**: Groups picks by station and phase (P/S), filters to a single best pick per station (prioritising `modelled` → `autopick`), and exports to `filtered_picks_organized.csv`.
+*   **`02_organize_quakexml_file_explained.ipynb`**: Companion notebook explaining the priority-filtering logic.
 
 ## 3. Inspecting Raw Waveform Files (.m)
 
-In addition to the catalog metadata, we also process the actual physical waveform recordings (saved as `.m` files).
+*   **`ref_read_m_file.py`**: Reference script demonstrating `.m` file reading, filtering, SNR calculation, and spectrogram plotting with `obspy`.
+*   **`03_check_raw_m_file.py`**: Prints a detailed metadata summary (Station, Network, Channel, Sampling Rate, Length) for all `.m` files in a directory.
+*   **`03_check_raw_m_file_explained.ipynb`**: Companion notebook explaining `.m` file inspection.
 
-*   **`ref_read_m_file.py`**: A reference script demonstrating how to find `.m` files by their origin timestamp, read them using `obspy`, apply filters, calculate Signal-to-Noise Ratios (SNR), and plot spectrograms.
-*   **`03_check_raw_m_file.py`**: A utility script that searches a directory for `.m` files and prints out a detailed summary of the trace metadata within them (Station, Network, Channel, Sampling Rate, Total Length).
-*   **`03_check_raw_m_file_explained.ipynb`**: A companion Jupyter Notebook that explains the process of reading and extracting metadata from these raw waveform files step-by-step.
+## 4. Exporting MiniSEED Files
 
-## 4. QuakeML to SeisBench CSV Converter
+*   **`04_export_mseed_files.py`**: Unpacks each trace from `.m` archive files into individual standard MiniSEED files under `unpack_top_300_miniseed_raw/`, with a metadata + waveform verification step.
+*   **`04_export_mseed_files_explained.ipynb`**: Companion notebook explaining the unpacking and verification logic.
 
-*   **`quakeml_to_seisbench.py`**: Reads a QuakeML event catalog and generates a `metadata.csv` file that is fully compatible with SeisBench. It extracts event origins and phase arrivals, formatting them exactly as required for model training or evaluation.
+## 5. Matching MiniSEED Files to QuakeMigrate Picks
 
-### Usage for SeisBench Conversion
+*   **`05_find_quakemigrate_mseed_files.py`**: Cross-references `filtered_picks_organized.csv` with the MiniSEED archive, locates the correct waveform for each event-station pair, and copies matches into `selected_quick_migrate_mseed/`.
+*   **`05_find_quakemigrate_mseed_files_explained.ipynb`**: Companion notebook explaining the file-matching logic.
 
-```bash
-python quakeml_to_seisbench.py --input filtered_events.xml --output metadata.csv
-```
+## 6. Checking Selected Traces
+
+*   **`06_check_selected_traces.py`**: Quality-control script that verifies trace lengths, sampling rates, and pick-time accuracy across all matched MiniSEED files.
+*   **`06_check_selected_traces_explained.ipynb`**: Companion notebook explaining the QC checks.
+
+## 7. Curating a Consistent ML Dataset
+
+*   **`07_curate_consistent_ML_dataset.py`**: Slices a fixed-length **10-second window centered on the P-wave arrival** for each event-station pair, enforces strict **ZNE component ordering**, and saves trimmed MiniSEED files and JSON metadata sidecar files to `trimmed_and_consistent_mseed/`.
+*   **`07_curate_consistent_ML_dataset_explained.ipynb`**: Companion notebook explaining windowing, resampling, and metadata generation.
+
+## 8. Packing to SeisBench Format
+
+*   **`08_pack_mseed_to_seisbench.py`**: Converts the curated MiniSEED + JSON files into SeisBench-compatible **HDF5 + CSV format**, applying a **70/15/15 train/dev/test split**. Output is written to `final_curated_seisbench_data/`.
+*   **`08_pack_mseed_to_seisbench_explained.ipynb`**: Companion notebook explaining the SeisBench packing process.
+
+## 9. Visualizing the Curated Dataset
+
+*   **`09_visualize_curated_final_dataset.py`**: Loads `final_curated_seisbench_data`, prints dataset statistics (station counts, P/S pick distributions), and generates 3-component (Z, N, E) waveform plots with annotated P and S phase arrivals for multiple random traces.
+*   **`09_visualize_curated_final_dataset.ipynb`**: Companion notebook explaining loading, statistics, and visualization.
+
+## 10. Generating a Training Configuration
+
+*   **`10_generate_training_config.py`**: Writes `icequake_train_config.json` — a portable config file centralising all training hyperparameters: dataset name, sampling rate, window length, batch size, learning rate, early stopping patience, loss weights, and device settings.
+*   **`10_generate_training_config.ipynb`**: Companion notebook explaining each configuration key.
+
+## 11. Demo Model Training
+
+*   **`11_demo_training_ML.py`**: End-to-end training script that:
+    1. Loads `icequake_train_config.json` and `final_curated_seisbench_data`.
+    2. Applies SeisBench augmentations (`WindowAroundSample`, `RandomWindow`, `Normalize`, `ProbabilisticLabeller`).
+    3. Initialises **PhaseNet** and trains with the **Adam** optimiser + **EarlyStopping** (with `tqdm` progress bars per epoch).
+    4. Saves best/final model checkpoints to `checkpoints/`.
+    5. Generates an annotated **loss history plot** (with best-epoch marker and min val loss annotation) to `output/`.
+    6. Produces **5-panel prediction plots** (waveform + ground truth + model output) for 4 random test samples to `output/`.
+    7. Evaluates **pick-time residuals** across the full test set and saves shaded P and S residual histograms to `output/`.
+
+---
+
+## Key Outputs
+
+| File / Directory | Description |
+|---|---|
+| `filtered_picks_organized.csv` | Cleaned, best-pick earthquake catalog |
+| `selected_quick_migrate_mseed/` | Matched raw waveforms for catalogued events |
+| `trimmed_and_consistent_mseed/` | Curated 10-second ZNE windows + JSON metadata |
+| `final_curated_seisbench_data/` | SeisBench-ready HDF5 + CSV dataset |
+| `icequake_train_config.json` | Portable training hyperparameter config |
+| `checkpoints/best_model.pth` | Best PhaseNet checkpoint (by validation loss) |
+| `checkpoints/loss_history.json` | Epoch-by-epoch train/val loss history |
+| `output/` | Loss curve, prediction plots, residual histograms |
+
+## Dependencies
+
+- [`obspy`](https://docs.obspy.org/) — Seismology data I/O and processing
+- [`seisbench`](https://seisbench.readthedocs.io/) — ML dataset formatting and model zoo (PhaseNet)
+- [`torch`](https://pytorch.org/) — Neural network training (PyTorch)
+- `numpy`, `pandas`, `matplotlib`, `seaborn`, `scipy`
+- `tqdm` — Progress bars during training and evaluation
