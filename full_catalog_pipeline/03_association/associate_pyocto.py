@@ -26,9 +26,17 @@ import argparse
 import glob
 import json
 import os
+import sys
 
+import numpy as np
 import pandas as pd
 import pyocto
+
+# vels1d_model.py lives in 04_relocation/ (it was written for the hypoDD models); the
+# same measured profile is what --velocity-source vels1d feeds to pyocto here.
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "04_relocation"))
+import vels1d_model
 
 STATIONS_JSON = "/scratch2/qm/t1/output/working_files/stations.json"
 
@@ -60,7 +68,34 @@ def build_station_df(network="7U"):
     return pd.DataFrame(rows)
 
 
-def build_velocity_model(out_path, array, transition_halfwidth_km=0.01):
+def build_vels1d_model_df(array, max_depth_km, step_m=20.0):
+    """pyocto model frame from the measured reflection profile (vels1d/), thickness-
+    shifted to `array` exactly as the hypoDD models are -- see vels1d_model.py.
+
+    Decimated to `step_m` because pyocto linearly interpolates velocity between
+    consecutive rows onto its own grid; 20 m is finer than any grid we solve on, so the
+    decimation is lossless in practice while keeping the frame small.
+    """
+    depth_m, vp_m_s, vs_m_s = vels1d_model.shifted_profile(array)
+    keep = depth_m <= (max_depth_km + 1.0) * 1000.0
+    depth_m, vp_m_s, vs_m_s = depth_m[keep], vp_m_s[keep], vs_m_s[keep]
+    stride = max(1, int(round(step_m / (depth_m[1] - depth_m[0]))))
+    idx = np.unique(np.r_[np.arange(0, len(depth_m), stride), len(depth_m) - 1])
+    return pd.DataFrame({
+        "depth": depth_m[idx] / 1000.0,
+        "vp": vp_m_s[idx] / 1000.0,
+        "vs": vs_m_s[idx] / 1000.0,
+    })
+
+
+def build_velocity_model(out_path, array, transition_halfwidth_km=0.01,
+                         source="twolayer", delta=0.1, zdist=10.0):
+    if source == "vels1d":
+        model_df = build_vels1d_model_df(array, zdist)
+        pyocto.VelocityModel1D.create_model(model_df, delta=delta, xdist=250, zdist=zdist,
+                                            path=out_path)
+        return pyocto.VelocityModel1D(out_path, tolerance=2.0)
+
     cfg = ARRAY_VELOCITY[array]
     ice_vp = cfg["ice_vp"]
     ice_vs = ice_vp / cfg["ice_vpvs"]
@@ -74,7 +109,8 @@ def build_velocity_model(out_path, array, transition_halfwidth_km=0.01):
         "vp": [ice_vp, ice_vp, BED_VP_KM_S, BED_VP_KM_S],
         "vs": [ice_vs, ice_vs, BED_VS_KM_S, BED_VS_KM_S],
     })
-    pyocto.VelocityModel1D.create_model(model_df, delta=0.1, xdist=250, zdist=10, path=out_path)
+    pyocto.VelocityModel1D.create_model(model_df, delta=delta, xdist=250, zdist=zdist,
+                                        path=out_path)
     return pyocto.VelocityModel1D(out_path, tolerance=2.0)
 
 
@@ -112,6 +148,18 @@ def main():
                           "a travel-time degeneracy right at the interface depth that pins ~10%% of events "
                           "there; 0.15 km cuts that to ~7%% with no further gain past ~0.3 km, and is itself a "
                           "physically defensible width for a gradational (not instantaneous) ice-bed contact")
+    ap.add_argument("--velocity-source", choices=["twolayer", "vels1d"], default="twolayer",
+                     help="'twolayer' (default, and what v5 used) is the per-array ice-over-bedrock "
+                          "step described above. 'vels1d' is the measured reflection-seismology "
+                          "profile from full_catalog_pipeline/vels1d/ -- the SAME model the hypoDD "
+                          "relocations use -- thickness-shifted per array by vels1d_model.py. It has a "
+                          "real firn gradient and a gradational ice-bed ramp, so --transition-halfwidth-km "
+                          "does not apply to it")
+    ap.add_argument("--model-delta", type=float, default=0.1,
+                     help="eikonal grid spacing (km) for the travel-time table. v5 used pyocto's 0.1 km. "
+                          "The vels1d firn gradient lives in the top 300 m, which 0.1 km cannot represent, "
+                          "so use ~0.02 with --velocity-source vels1d (and rerun the twolayer model at the "
+                          "same delta if you want the comparison to isolate the model, not the grid)")
     args = ap.parse_args()
 
     files = sorted(glob.glob(args.picks_glob))
@@ -123,7 +171,10 @@ def main():
     stations = stations[stations["id"].isin(picks["station"].unique())].reset_index(drop=True)
     print(f"Stations with picks: {len(stations)}")
 
-    velocity_model = build_velocity_model(args.velocity_model_path, args.array, args.transition_halfwidth_km)
+    velocity_model = build_velocity_model(
+        args.velocity_model_path, args.array, args.transition_halfwidth_km,
+        source=args.velocity_source, delta=args.model_delta)
+    print(f"Velocity model: source={args.velocity_source} delta={args.model_delta} km")
 
     lat_pad, lon_pad = 0.05, 0.1
     associator = pyocto.OctoAssociator.from_area(

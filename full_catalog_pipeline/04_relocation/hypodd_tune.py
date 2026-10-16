@@ -83,6 +83,10 @@ CV_TRAIN_FRAC = 0.8
 # directory. tune_root() therefore carries a suffix derived from the filename, and every
 # subcommand (run/sweep/report/promote) needs the same --dtcc to address the same tree.
 SRC_DTCC = "dt.cc"
+# Which relocation's input_files/ the sweep starts from, set by --reloc. v6 (hypodd_v6_allfix)
+# has a different event set, dt.ct (corrected MAXSEP) and dt.cc (x2 upsampled) from v5, so it
+# is a different dataset too and gets its own tune tree under its own directory.
+SRC_RELOC = "hypodd_vels1d"
 
 RELOC_COLS = [
     "id", "lat", "lon", "depth", "x", "y", "z", "ex", "ey", "ez",
@@ -113,6 +117,15 @@ SCALARS = {
     "minobs_cc": 3,       # MINOBS_CC: CC links an event needs to join a cluster
     "minobs_ct": 4,       # MINOBS_CT
     "istart": 2,          # 1 = start from cluster centroid, 2 = from catalog locations
+    # S weight as a multiple of the P weight. Catalog S picks are the weak link: against
+    # CC at coeff>=0.8, T2 S picks miss by >50 ms 8.2% of the time vs 0.1% for P.
+    "ct_s_scale": 1.0,
+    "cc_s_scale": 1.0,
+    # Drop individual catalog S PICKS whose error, estimated against CC, exceeds this (ms).
+    # See clean_dtct_s(). None = use dt.ct as built.
+    "dtct_s_clean_ms": None,
+    "dtct_s_clean_minw": 0.8,      # CC coefficient a pair needs to vote on a pick
+    "dtct_s_keep_unjudged": True,  # False: keep only S picks CC validated as good
 }
 
 
@@ -232,6 +245,21 @@ CONFIGS = {
     # ---------------------------------------------------------------------------------
     "clean_ccstrong": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5,
                           wt_cc=[0.99, 0.50, 0.25, 0.10, 0.05]),
+    # P-heavy: catalog S picks down-weighted (CC S kept at full weight, it is accurate).
+    "clean_ctS0.25": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5, ct_s_scale=0.25),
+    "clean_ctS0": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5, ct_s_scale=0.0),
+    # P-only catalog data held at full weight to the end, to anchor against the late-stage
+    # whole-cluster translation (v6 T2 cluster 1 slid 1.2 km once wt_ct fell to 0.05).
+    "clean_ctS0_Panchor": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5, ct_s_scale=0.0,
+                              wt_ct=[0.6, 0.6, 0.6, 0.6, 0.6]),
+    # Option D: keep catalog S, but drop individual S picks that CC shows are off by > 30 ms.
+    # Only ~34% of S picks have enough coeff>=0.8 CC partners to judge, so vote at >=0.6
+    # (69% judged, 14.7% of those off by >30 ms). D1 keeps the unjudged picks; D2 drops them.
+    "clean_ctSclean30_Panchor": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5, dtct_s_clean_ms=30,
+                                    dtct_s_clean_minw=0.6, wt_ct=[0.6, 0.6, 0.6, 0.6, 0.6]),
+    "clean_ctSvalid30_Panchor": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5, dtct_s_clean_ms=30,
+                                    dtct_s_clean_minw=0.6, dtct_s_keep_unjudged=False,
+                                    wt_ct=[0.6, 0.6, 0.6, 0.6, 0.6]),
     "clean_ccweak": cfg(dtcc_max_s=0.2, dtcc_min_w=0.5,
                         wt_cc=[0.99, 0.20, 0.06, 0.02, 0.01]),
 }
@@ -240,7 +268,7 @@ CONFIGS = {
 def tune_root(array):
     base = os.path.dirname(ARRAY_CONFIG[array]["working_dir"])
     suffix = "" if SRC_DTCC == "dt.cc" else "_" + SRC_DTCC.replace("dt.cc.", "").replace(".", "_")
-    return os.path.join(base, "hypodd_vels1d", "tune" + suffix)
+    return os.path.join(base, SRC_RELOC, "tune" + suffix)
 
 
 def src_dtcc(array):
@@ -250,7 +278,7 @@ def src_dtcc(array):
 
 def base_inputs(array):
     return os.path.join(os.path.dirname(ARRAY_CONFIG[array]["working_dir"]),
-                        "hypodd_vels1d", "input_files")
+                        SRC_RELOC, "input_files")
 
 
 def fmt(v):
@@ -281,9 +309,11 @@ def build_inp(array, config, idat=3, nset=None, isolv=2, iaq=1, minobs=None):
     n = len(config["niter"]) if nset is None else nset
     for i in range(n):
         stages.append(
-            f"{config['niter'][i]} {config['wt_cc'][i]} {config['wt_cc'][i]} "
+            f"{config['niter'][i]} {config['wt_cc'][i]} "
+            f"{round(config['wt_cc'][i] * config.get('cc_s_scale', 1.0), 4)} "
             f"{fmt(config['wrcc'][i])} {fmt(config['wdcc'][i])} "
-            f"{config['wt_ct'][i]} {config['wt_ct'][i]} "
+            f"{config['wt_ct'][i]} "
+            f"{round(config['wt_ct'][i] * config.get('ct_s_scale', 1.0), 4)} "
             f"{fmt(config['wrct'][i])} {fmt(config['wdct'][i])}  {config['damp'][i]}"
         )
     return "\n".join([
@@ -332,6 +362,84 @@ def link_inputs(src, dst, names):
             os.link(s, d)
         except OSError:
             shutil.copy2(s, d)
+
+
+def clean_dtct_s(dtct_src, dtcc_src, dst, max_err_ms, min_w=0.8, min_pairs=3,
+                 keep_unjudged=True):
+    """Remove bad catalog S picks from dt.ct, using CC as the reference.
+
+    Each dt.ct S observation with a CC counterpart (same pair, station, phase; coeff >= min_w)
+    gives e_ij = (t_i - t_j) - dtcc_ij = err_i - err_j. With many partners per event, the median
+    of an event's e (sign-corrected) estimates ITS OWN pick error, since most partner picks are
+    good. A pick with |err| > max_err_ms on >= min_pairs pairs is dropped from EVERY dt.ct pair
+    it appears in, including pairs that have no CC. Picks with too few CC pairs to judge are
+    kept unless keep_unjudged=False (then only CC-validated S picks survive). P is untouched."""
+    cc = {}
+    i = j = None
+    with open(dtcc_src) as f:
+        for line in f:
+            if line[0] == "#":
+                p = line.split()
+                i, j = int(p[1]), int(p[2])
+                continue
+            p = line.split()
+            if p[3] == "S" and float(p[2]) >= min_w:
+                cc[(i, j, p[0])] = float(p[1])
+    errs = {}
+    with open(dtct_src) as f:
+        for line in f:
+            if line[0] == "#":
+                p = line.split()
+                i, j = int(p[1]), int(p[2])
+                continue
+            p = line.split()
+            if p[4] != "S":
+                continue
+            c = cc.get((i, j, p[0]))
+            if c is None:
+                continue
+            e = (float(p[1]) - float(p[2])) - c
+            errs.setdefault((i, p[0]), []).append(e)
+            errs.setdefault((j, p[0]), []).append(-e)
+    bad = {k for k, v in errs.items()
+           if len(v) >= min_pairs and abs(np.median(v)) * 1000 > max_err_ms}
+    good = {k for k, v in errs.items() if len(v) >= min_pairs} - bad
+    n_s = n_drop = n_pairs_out = 0
+    with open(dtct_src) as f, open(dst, "w") as out:
+        header, body = None, []
+
+        def flush():
+            nonlocal n_pairs_out
+            if header is not None and body:
+                out.write(header)
+                out.writelines(body)
+                n_pairs_out += 1
+
+        for line in f:
+            if line[0] == "#":
+                flush()
+                header, body = line, []
+                p = line.split()
+                i, j = int(p[1]), int(p[2])
+                continue
+            p = line.split()
+            if p[4] == "S":
+                n_s += 1
+                if keep_unjudged:
+                    drop = (i, p[0]) in bad or (j, p[0]) in bad
+                else:
+                    drop = (i, p[0]) not in good or (j, p[0]) not in good
+                if drop:
+                    n_drop += 1
+                    continue
+            body.append(line)
+        flush()
+    judged = sum(1 for v in errs.values() if len(v) >= min_pairs)
+    print(f"clean_dtct_s: {len(bad)}/{judged} judged S picks off by >{max_err_ms:g} ms "
+          f"({100*len(bad)/max(judged,1):.1f}%); dropped {n_drop}/{n_s} dt.ct S obs "
+          f"({100*n_drop/max(n_s,1):.1f}%); {n_pairs_out} pairs kept")
+    return dict(n_s_picks_judged=judged, n_s_picks_bad=len(bad), n_ct_s=n_s,
+                n_ct_s_dropped=n_drop)
 
 
 def split_dtcc(src, train_path, heldout_path, seed=CV_SEED, train_frac=CV_TRAIN_FRAC):
@@ -635,13 +743,19 @@ def run_config(array, name, force=False, seed=CV_SEED):
 
     # 1. Production run: the full config on all the data. This is the candidate relocation.
     prod = os.path.join(root, "prod")
-    link_inputs(src, prod, ["dt.ct", "event.sel", "station.sel"])
+    clean_ct = config.get("dtct_s_clean_ms")
+    link_inputs(src, prod, ["event.sel", "station.sel"] + ([] if clean_ct else ["dt.ct"]))
     prod_cc = os.path.join(prod, "dt.cc")
     if not os.path.exists(prod_cc):
         n_in, n_out = filter_dtcc(src_dtcc(array), prod_cc,
                                   config["dtcc_max_s"], config["dtcc_min_w"])
         result["n_cc_total"], result["n_cc_kept"] = n_in, n_out
         result["cc_kept_pct"] = round(100.0 * n_out / max(n_in, 1), 2)
+    if clean_ct and not os.path.exists(os.path.join(prod, "dt.ct")):
+        result.update(clean_dtct_s(os.path.join(src, "dt.ct"), prod_cc,
+                                   os.path.join(prod, "dt.ct"), clean_ct,
+                                   min_w=config["dtct_s_clean_minw"],
+                                   keep_unjudged=config["dtct_s_keep_unjudged"]))
     # The production run uses ALL the CC data, so it does not depend on the CV split seed --
     # a seed variant reuses the default-seed run rather than spending another inversion on a
     # bit-identical result.
@@ -667,7 +781,7 @@ def run_config(array, name, force=False, seed=CV_SEED):
 
     # 2. Train run: same config, 80% of the cross-correlation data.
     train = os.path.join(root, "train")
-    link_inputs(src, train, ["dt.ct", "event.sel", "station.sel"])
+    link_inputs(src, train, ["event.sel", "station.sel"] + ([] if clean_ct else ["dt.ct"]))
     # Split the FULL dt.cc, then apply this config's filter to the train half only. The
     # held-out half is filtered by one fixed, config-independent rule (EVAL_MAX_DT_S), so
     # every config is scored on exactly the same observations no matter what it trained on --
@@ -681,6 +795,11 @@ def run_config(array, name, force=False, seed=CV_SEED):
         _, n_tr = filter_dtcc(raw_train, train_cc, config["dtcc_max_s"], config["dtcc_min_w"])
     else:
         n_tr = sum(1 for ln in open(train_cc) if not ln.startswith("#"))
+    if clean_ct and not os.path.exists(os.path.join(train, "dt.ct")):
+        # judged against the TRAIN CC only, so the held-out 20% does not leak into training
+        clean_dtct_s(os.path.join(src, "dt.ct"), train_cc, os.path.join(train, "dt.ct"), clean_ct,
+                     min_w=config["dtct_s_clean_minw"],
+                     keep_unjudged=config["dtct_s_keep_unjudged"])
     heldout_path = os.path.join(root, "heldout.cc")
     _, n_he = filter_dtcc(raw_held, heldout_path, EVAL_MAX_DT_S, None)
     result["n_cc_train"], result["n_cc_heldout"] = n_tr, n_he
@@ -962,10 +1081,14 @@ def main():
                        help="cross-correlation file in input_files/ to sweep on. Anything but "
                             "the default writes to (and reads from) tune_<name>/ instead of "
                             "tune/, since a different dt.cc is a different dataset.")
+        p.add_argument("--reloc", default="hypodd_vels1d",
+                       help="relocation directory under <array>_v5/ whose input_files/ the "
+                            "sweep starts from, e.g. hypodd_v6_allfix")
     args = ap.parse_args()
 
-    global SRC_DTCC
+    global SRC_DTCC, SRC_RELOC
     SRC_DTCC = args.dtcc
+    SRC_RELOC = args.reloc
     if not os.path.exists(src_dtcc(args.array)):
         raise SystemExit(f"no such cross-correlation file: {src_dtcc(args.array)}")
 

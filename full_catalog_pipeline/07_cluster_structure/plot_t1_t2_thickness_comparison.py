@@ -4,18 +4,14 @@ does one array see seismicity confined to a thin layer at the ice-bed
 interface while the other sees it extend further up into the ice column, or
 are the two sites similar?
 
-Three catalogs, not two, because T1 and T2 are at different refinement
-stages (T2's hypoDD relocation is still cross-correlating as of 2026-07-28 --
-see hypodd_relocation_setup memory -- so no post-hypoDD T2 catalog exists
-yet):
-  - T1 pyocto v5 (pre-hypoDD, raw grid-search locations)
-  - T1 hypoDD ccscale_0.33 (post-hypoDD, continuous-optimization refined)
-  - T2 pyocto v5 (pre-hypoDD, raw grid-search locations -- best available)
+Four catalogs: each array before and after hypoDD, both from the authoritative
+relocation (catalog_paths.AUTHORITATIVE, v6 since 2026-09-18):
+  - <array> pyocto (pre-hypoDD): the vels1d association the v6 relocation was built from
+  - <array> hypoDD (post-hypoDD): the authoritative relocation
 
-Including T1's own pre-vs-post pair alongside T2's pre-only catalog lets the
-reader calibrate how much a raw pyocto depth distribution typically changes
-after hypoDD refinement, before trusting any T1-vs-T2 comparison that
-necessarily leans on T2's still-preliminary depths. Known pyocto-stage
+(Until 2026-10 only T1 had a hypoDD catalog, so T2 was shown pre-hypoDD only.) Showing
+each array's pre-vs-post pair lets the reader see how much hypoDD reshapes a raw pyocto
+depth distribution at each site before comparing the two. Known pyocto-stage
 caveat (pyocto_full_catalog_rebuild memory): raw grid-search locations show
 flat depth-banding artifacts near the ice-bed interface -- any "thickness"
 read from a *_pyocto-raw series alone should be treated as an upper bound on
@@ -52,9 +48,15 @@ import pandas as pd
 
 import catalog_paths
 
-T1_PRE_CSV = "full_catalog_pipeline/artifacts/full_run/T1_v5/pyocto_events.csv"
+# v6 was built from the vels1d association (rebuild_v6_from_vels1d_association.py); the
+# v5 relocations from <array>_v5/pyocto_events.csv.
+if catalog_paths.AUTHORITATIVE == "hypodd_v6_allfix":
+    _PRE = "full_catalog_pipeline/artifacts/full_run/vmtest/{}_vels1d_d02/pyocto_events.csv"
+else:
+    _PRE = "full_catalog_pipeline/artifacts/full_run/{}_v5/pyocto_events.csv"
+T1_PRE_CSV, T2_PRE_CSV = _PRE.format("T1"), _PRE.format("T2")
 T1_RELOC = catalog_paths.reloc("T1")
-T2_PRE_CSV = "full_catalog_pipeline/artifacts/full_run/T2_v5/pyocto_events.csv"
+T2_RELOC = catalog_paths.reloc("T2")
 OUT_DIR = "full_catalog_pipeline/artifacts/full_run"
 OUT_PNG = f"{OUT_DIR}/t1_t2_depth_above_bed_comparison.png"
 
@@ -91,12 +93,13 @@ def load_series():
     t1_pre = pd.read_csv(T1_PRE_CSV)
     t1_post = pd.read_csv(T1_RELOC, sep=r"\s+", header=None, names=RELOC_COLS)
     t2_pre = pd.read_csv(T2_PRE_CSV)
+    t2_post = pd.read_csv(T2_RELOC, sep=r"\s+", header=None, names=RELOC_COLS)
 
     # drop events piled at the pyocto search-box depth edges (near-surface "air
     # quakes" at depth~0, and the rare deep-box-edge events near depth~6km) --
     # these are grid-search boundary artifacts, not real shallow/deep icequakes.
     # hypoDD's own IAQ=1 setting already removes the near-surface ones from the
-    # post-hypoDD catalog, so this filter only changes the two *_pre series.
+    # post-hypoDD catalogs, so this filter only changes the two *_pre series.
     n_t1_pre_before, n_t2_pre_before = len(t1_pre), len(t2_pre)
     t1_pre = t1_pre[(t1_pre["depth"] > 0.05) & (t1_pre["depth"] < 5.5)]
     t2_pre = t2_pre[(t2_pre["depth"] > 0.05) & (t2_pre["depth"] < 5.5)]
@@ -105,8 +108,9 @@ def load_series():
 
     series = {
         "T1 pyocto (pre-hypoDD)": (T1_BED_KM - t1_pre["depth"].values) * 1000,
-        "T1 hypoDD ccscale_0.33 (post-hypoDD)": (T1_BED_KM - t1_post["depth"].values) * 1000,
-        "T2 pyocto (pre-hypoDD, no hypoDD yet)": (T2_BED_KM - t2_pre["depth"].values) * 1000,
+        f"T1 hypoDD {catalog_paths.AUTHORITATIVE} (post-hypoDD)": (T1_BED_KM - t1_post["depth"].values) * 1000,
+        "T2 pyocto (pre-hypoDD)": (T2_BED_KM - t2_pre["depth"].values) * 1000,
+        f"T2 hypoDD {catalog_paths.AUTHORITATIVE} (post-hypoDD)": (T2_BED_KM - t2_post["depth"].values) * 1000,
     }
     return series
 
@@ -130,8 +134,9 @@ def summarize(series):
 
 
 def plot(series, stats, out_path):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 6), sharey=True)
-    colors = [MUTED, ORANGE, BLUE]
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharex=True)
+    axes = axes.ravel()
+    colors = [MUTED, ORANGE, MUTED, BLUE]
     xlim = (-800, 2200)
     bins = np.linspace(xlim[0], xlim[1], 60)
 
@@ -144,8 +149,9 @@ def plot(series, stats, out_path):
         ax.set_title(f"{name}\nn={row['n']:.0f}, median={row['median_m']:.0f} m, "
                       f"5-95th pctile span={row['p90_span_m']:.0f} m", fontsize=10.5)
 
-    axes[0].set_ylabel("Number of events")
-    fig.text(0.5, 1.02, "Vertical extent of icequake-occupied ice: T1 (pre & post hypoDD) vs. T2 (pre only)",
+    for ax in axes[::2]:
+        ax.set_ylabel("Number of events")
+    fig.text(0.5, 1.02, "Vertical extent of icequake-occupied ice: T1 vs. T2, pre & post hypoDD",
               ha="center", fontsize=14, fontweight="bold")
     fig.text(0.5, 0.965, "Dashed line = interface (0 m); solid line = median. Negative = below interface "
                           "(bedrock side, likely grid-search/association-box artifact, not real).",
