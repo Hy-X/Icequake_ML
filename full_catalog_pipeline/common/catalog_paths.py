@@ -33,9 +33,14 @@ editing anything), or ICEQUAKE_SCRATCH to put scratch runs on a different disk.
 import os
 
 # Directory name, under artifacts/full_run/{ARRAY}_v5/, of the authoritative relocation.
-#   "hypodd"          -- the superseded v5 run (hand-assembled velocity model, wrong Vs)
-#   "hypodd_vels1d"   -- reflection-seismology velocity model, tuned inversion settings
-AUTHORITATIVE = os.environ.get("ICEQUAKE_RELOC", "hypodd_vels1d")
+#   "hypodd"            -- the original v5 run (hand-assembled velocity model, wrong Vs)
+#   "hypodd_vels1d"     -- v5: reflection-seismology velocity model, tuned inversion settings.
+#                          Its dt.cc is 0.5% P at T1 and 2.7% P at T2 -- effectively S-only.
+#   "hypodd_v6_allfix"  -- v6 (2026-09-18, CURRENT): pyocto association redone under the same
+#                          vels1d model the relocation uses, geodetically correct MAXSEP, and
+#                          the x2 UPSAMPLED dt.cc that takes P from 0.5%->54% (T1) and
+#                          2.7%->54% (T2). See each run dir's PROVENANCE.md.
+AUTHORITATIVE = os.environ.get("ICEQUAKE_RELOC", "hypodd_v6_allfix")
 
 ARRAYS = ["T1", "T2"]
 _ROOT = "full_catalog_pipeline/artifacts/full_run"
